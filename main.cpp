@@ -19,15 +19,39 @@ void usage() {
 	return;
 }
 
+/*
+ * Compute number of differences between two sequences (N's ignored).
+ */
 int dist(const string &s1, const string &s2) {
 	assert (s1.size()==s2.size());
 	int dist=0;
 	for (int i=0;i<s1.size();i++){
-		if (s1[i]!=s2[i]){
-				dist++;
+		if (s1[i]!=s2[i] && s1[i]!='N' && s2[i] != 'N'){
+			dist++;
 		}
 	}
 	return dist;
+}
+
+/*
+ * Compute divergence between two sequences (N's ommited from stats)
+ */
+float diver(const string &s1, const string &s2) {
+	assert (s1.size()==s2.size());
+	int poss=0;
+	int diff=0;
+	for (int i=0;i<s1.size();i++){
+		if (s1[i]=='N' || s2[j]=='N') {
+			continue;
+		}
+
+		poss++;
+
+		if (s1[i]!=s2[i]){
+			diff++;
+		}
+	}
+	return 1.0*diff/poss;
 }
 
 int main (int argc, const char **argv) {
@@ -51,7 +75,11 @@ int main (int argc, const char **argv) {
 	int count=0;
 	while ((l = kseq_read(seq)) >= 0) {
 		names.push_back(seq->name.s);
-		seqs.push_back(seq->seq.s);
+		string s(seq->seq.s);
+		for (auto & c: s) {
+			c = toupper(c);
+		}
+		seqs.push_back(s);
 		count++;
 	}
 	kseq_destroy(seq);
