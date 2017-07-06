@@ -5,6 +5,7 @@
 #include <cassert>
 #include <string>
 #include <vector>
+#include <cmath>
 #include <zlib.h>
 
 #include "kseq.h"
@@ -20,38 +21,34 @@ void usage() {
 }
 
 /*
- * Compute number of differences between two sequences (N's ignored).
+ * Compute number of differences between two sequences (N's ignored) and the number of non-N positions.
  */
-int dist(const string &s1, const string &s2) {
+void compare_seqs(const string &s1, const string &s2, int &non_ns, int &non_ns_diff) {
 	assert (s1.size()==s2.size());
-	int dist=0;
+
+	non_ns=0;
+	non_ns_diff=0;
+
 	for (int i=0;i<s1.size();i++){
-		if (s1[i]!=s2[i] && s1[i]!='N' && s2[i] != 'N'){
-			dist++;
+		if (s1[i]!='N' && s2[i]!='N') {
+			non_ns++;
+
+			if (s1[i]!=s2[i]) {
+				non_ns_diff++;
+			}
 		}
 	}
-	return dist;
 }
 
-/*
- * Compute divergence between two sequences (N's ommited from stats)
- */
-float diver(const string &s1, const string &s2) {
-	assert (s1.size()==s2.size());
-	int poss=0;
-	int diff=0;
-	for (int i=0;i<s1.size();i++){
-		if (s1[i]=='N' || s2[j]=='N') {
-			continue;
-		}
-
-		poss++;
-
-		if (s1[i]!=s2[i]){
-			diff++;
+template <typename T, typename U>
+void dist_mat(const T &seqs, U &non_ns, U &non_ns_diff){
+	for (int i=0;i<seqs.size();i++){
+		for (int j=0;j<=i;j++){
+			compare_seqs(seqs[i], seqs[j], non_ns[i][j], non_ns_diff[i][j]);
+			non_ns[j][i]=non_ns[i][j];
+			non_ns_diff[j][i]=non_ns_diff[i][j];
 		}
 	}
-	return 1.0*diff/poss;
 }
 
 int main (int argc, const char **argv) {
@@ -85,13 +82,20 @@ int main (int argc, const char **argv) {
 	kseq_destroy(seq);
 	gzclose(fp);
 
-	int d[count][count];
+	int len=seqs[0].size();
 
-	for (int i=0;i<count;i++){
-		for (int j=0;j<=i;j++){
-			d[i][j]=d[j][i]=dist(seqs[i],seqs[j]);
-		}
-	}
+	cerr << "Constructing empty matrices" << std::endl;
+
+	vector<vector<int>> non_ns(count, vector<int>(count, 0));
+	vector<vector<int>> non_ns_diff(count, vector<int>(count, 0));
+
+	cerr << "Computing distance matrices" << std::endl;
+
+	dist_mat(seqs, non_ns, non_ns_diff);
+
+	/*
+	 * print the output
+	 */
 
 	cout << "#taxid";
 	for (int j=0;j<count;j++){
@@ -102,7 +106,7 @@ int main (int argc, const char **argv) {
 	for (int i=0;i<count;i++){
 		cout << names[i];
 		for (int j=0;j<count;j++){
-			cout << "\t" << d[i][j];
+			cout << "\t" << (int) round( (1.0*non_ns_diff[i][j]/non_ns[i][j])*len );
 		}
 		cout << endl;
 	}
