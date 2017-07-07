@@ -1,3 +1,31 @@
+/*
+	The MIT License
+
+	Copyright (c) 2017 Karel Brinda <kbrinda@hsph.harvard.edu>
+
+	Permission is hereby granted, free of charge, to any person obtaining
+	a copy of this software and associated documentation files (the
+	"Software"), to deal in the Software without restriction, including
+	without limitation the rights to use, copy, modify, merge, publish,
+	distribute, sublicense, and/or sell copies of the Software, and to
+	permit persons to whom the Software is furnished to do so, subject to
+	the following conditions:
+
+	The above copyright notice and this permission notice shall be
+	included in all copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+	EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+	MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+	NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+	BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+	ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+	CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
+ */
+
+
+
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
@@ -7,6 +35,7 @@
 #include <vector>
 #include <cmath>
 #include <zlib.h>
+#include <getopt.h>
 
 #include "kseq.h"
 
@@ -29,24 +58,191 @@ KSEQ_INIT(gzFile, gzread)
 
 using namespace std;
 
+/*
+ * Print usage.
+ */
 void usage() {
-	cout << "Program: distmat - compute distance matrix from a FASTA alignment file" << endl;
-    cout << "Usage:   distmat <inp.aln>" << endl << endl;
-    cout << "Options:" << endl;
-    cout << "  -s   skip columns with N's" << endl;
-    cout << "  -n   don't normalize (to account for skipped columns)" << endl;
-	return;
+    cerr<<
+    "\n"
+    "Program: distmat - compute distance matrix from a FASTA alignment file\n"
+    "\n"
+    "Usage:   distmat <inp.aln>\n"
+    "\n"
+    "Options:\n"
+    "  -s   skip columns with N's\n"
+    "  -n   don't normalize (to account for skipped columns)\n"
+    << endl;
+    return;
 }
 
 /*
- * Compare sequences
+ * Parse arguments.
  */
+void parse_arguments(const int argc, const char **argv, string &fasta_fn) {
+
+    int c;
+    while ((c = getopt(argc, (char *const *)argv, "hsn")) >= 0) {
+        switch (c) {
+            case 'h': {
+                usage();
+                exit(0);
+                break;
+            }
+            case 's': {
+                //skip_N_cols=true;
+                break;
+            }
+            case 'n': {
+                //comp_abs=true;
+                break;
+            }
+            case '?': {
+                cerr<<"Unknown error"<<std::endl;
+                exit(1);
+            }
+        }
+    }
+}
+
+
+/*
+ * Load sequences and convert nucleotides to upper case.
+ */
+template <typename T>
+void load_sequences(const string &fasta_fn, T &names, T &seqs) {
+    gzFile fp;
+    kseq_t *seq;
+    int l;
+    fp = gzopen(fasta_fn.c_str(), "r");
+    seq = kseq_init(fp);
+
+    int len=0; // length of sequencing (for checking)
+
+    while ((l = kseq_read(seq)) >= 0) {
+        names.push_back(seq->name.s);
+        string s(seq->seq.s);
+        for (auto & c: s) {
+            c = toupper(c);
+        }
+        if(len!=0){
+            assert(len==s.size());
+        }
+        else{
+            len=(int)s.size();
+        }
+
+        for(char &a: s){
+            assert ((int)a<128);
+        }
+
+        seqs.push_back(s);
+    }
+    kseq_destroy(seq);
+    gzclose(fp);
+
+    assert(seqs.size()>0);
+}
+
+
+/*
+ * Compute pileup (len x 128).
+ */
+template <typename T, typename U>
+void compute_pileup(const T &seqs, U &pileup) {
+    auto len=seqs[0].size();
+    for(int i=0; i<len; i++){
+        for(int j=0; j<128; i++){
+            pileup[i][j]=0;
+        }
+    }
+
+    for (const auto &seq: seqs){
+        for(int i=0; i<len; i++){
+            int c=seq[i];
+            ++pileup[i][c];
+        }
+    }
+}
+
+
+/*
+ * Compute consensus string.
+ */
+template <typename T>
+void compute_consensus(const T &pileup, string &consensus) {
+    //todo
+    consensus = string('A', pileup[0].size());
+}
+
+
+/*
+ * Compute mask.
+ *
+ * 0 - position ignored
+ * N - position non-ignored, containg Ns
+ * 1 - position non-ignored
+ */
+template <typename T>
+void compute_mask(const T &pileup, string &consensus) {
+    //todo
+    consensus = string('1', pileup[0].size());
+}
+
+
+/*
+ * Compute pair matrix (128 x 128).
+ */
+template <typename T>
+void compute_pair_matrix(const string &seq1, const string &seq2, T &pair_matrix){
+    for(int i=0; i<128; i++){
+        for(int j=0; j<128; j++){
+            pair_matrix[i][j]=0;
+        }
+    }
+    int len=(int)seq1.size();
+    for (int i=0;i<len;i++){
+        ++pair_matrix[seq1[i]][seq2[i]];
+    }
+}
+
+
+/*
+ * Compute distances.
+ */
+template <typename T, typename U>
+T compute_jaccard_distance(U &pair_matrix) {
+}
+
+
+/*
+ * Print distance matrix.
+ */
+template <typename T, typename U>
+void compute_jaccard_distance(const T &names, const U &distance_matrix, int count) {
+    cout << "#taxid";
+    for (const string& name : names){
+        cout << "\t" << name;
+    }
+    cout << endl;
+
+    for (int i=0;i<count;i++){
+        cout << names[i];
+        for (int j=0;j<count;j++){
+            cout << "\t" << distance_matrix[i][j];
+        }
+        cout << endl;
+    }
+}
+
+
+
+/* Compare sequences */
 template<typename T>
-void compare_seqs(const string &s1, const string &s2, T (&counts)[5][5]) {
+void compare_seqs(const string &s1, const string &s2, T (&counts)[5][5], const string &ncols, bool comp_abs) {
     // const string &skipped,
-	auto l1=s1.size();
+    auto l1=s1.size();
     auto l2=s2.size();
-	assert (l1==l2);
+    assert (l1==l2);
 
     for (int i=0;i<5;i++){
         for (int j=0;j<5;j++){
@@ -54,84 +250,62 @@ void compare_seqs(const string &s1, const string &s2, T (&counts)[5][5]) {
         }
     }
 
-	for (int i=0;i<l1;i++){
-        ++counts[nt256_nt4[s1[i]]][nt256_nt4[s2[i]]];
-	}
+    for (int i=0;i<l1;i++){
+        if(ncols[i]!='N'){
+            ++counts[nt256_nt4[s1[i]]][nt256_nt4[s2[i]]];
+        }
+    }
 }
 
 template <typename T, typename U>
-void dist_mat(const T &seqs, U &matrix){
+void dist_mat(const T &seqs, U &matrix, const string &ncols, bool comp_abs){
     int counts[5][5];
-	auto no_seqs=seqs.size();
-	//int len=seqs[0].size();
-	for (int i=0;i<no_seqs;i++){
-		for (int j=0;j<=i;j++){
-			compare_seqs(seqs[i], seqs[j], counts);
-            matrix[i][j]=matrix[j][i]=counts[0][0]+counts[1][1]+counts[2][2]+counts[3][3]+counts[4][4];
-		}
-	}
+    auto no_seqs=seqs.size();
+    int len=(int)seqs[0].size();
+    for (int i=0;i<no_seqs;i++){
+        for (int j=0;j<=i;j++){
+            compare_seqs(seqs[i], seqs[j], counts, ncols, comp_abs);
+            matrix[i][j]=len-(matrix[j][i]=counts[0][0]+counts[1][1]+counts[2][2]+counts[3][3]+counts[4][4]);
+        }
+    }
 }
 
 
 int main (int argc, const char **argv) {
-	if (argc!=2){
-		usage();
-		return EXIT_FAILURE;
-	}
+    bool skip_N_cols=false;
+    bool comp_abs=false;
+    string fasta_fn;
+    parse_arguments(argc, argv, fasta_fn);
 
-	vector<string> names, seqs;
+    vector<string> names, seqs;
+    load_sequences(argv[1], names, seqs);
 
-	gzFile fp;
-	kseq_t *seq;
-	int l;
-	if (argc == 1) {
-		cerr << "Usage: " << argv[0] << " <in.seq>" << endl;
-		return 1;
-	}
-	fp = gzopen(argv[1], "r");
-	seq = kseq_init(fp);
-
-	int count=0;
-	while ((l = kseq_read(seq)) >= 0) {
-		names.push_back(seq->name.s);
-		string s(seq->seq.s);
-		for (auto & c: s) {
-			c = toupper(c);
-		}
-		seqs.push_back(s);
-		count++;
-	}
-	kseq_destroy(seq);
-	gzclose(fp);
+    int count=(int)seqs.size();
+    int len=(int)seqs[0].size();
 
 
-	cerr << "Constructing empty matrices" << std::endl;
+    cerr << "Constructing empty matrices" << std::endl;
+    vector<vector<int>> distance_matrix(count, vector<int>(count, 0));
 
-	vector<vector<int>> distance_matrix(count, vector<int>(count, 0));
+    cerr << "Computing distance matrices" << std::endl;
 
-	cerr << "Computing distance matrices" << std::endl;
+    string ncols=string(len, 'A');
+    if (skip_N_cols){
+        for (auto& seq : seqs) {
+            for(int i=0;i<seq.size();i++){
+                if(seq[i]=='N'){
+                    ncols[i]='N';
+                }
+            }
 
-	dist_mat(seqs, distance_matrix);
+        }
+    }
+    dist_mat(seqs, distance_matrix, ncols, comp_abs);
 
-	/*
-	 * print the output
-	 */
+    /*
+     * print the output
+     */
 
-	cout << "#taxid";
-	for (int j=0;j<count;j++){
-		cout << "\t" << names[j];
-	}
-	cout << endl;
 
-	for (int i=0;i<count;i++){
-		cout << names[i];
-		for (int j=0;j<count;j++){
-            cout << "\t" << distance_matrix[i][j];
-
-            //cout << "\t" << (int) round( (1.0*non_ns_diff[i][j]/non_ns[i][j])*len );
-		}
-		cout << endl;
-	}
-
-	return 0;
+    return 0;
 }
