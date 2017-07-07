@@ -5,23 +5,23 @@ LIBS      = -lm -lz -lpthread
 PREFIX    = $(DESTDIR)/usr/local
 BINDIR    = $(PREFIX)/bin
 
-ofiles    = main.cpp.o
-hfiles    = $(wildcard *.h)
+ofiles    = distmat/main.cpp.o
+hfiles    = $(wildcard distmat/*.h)
 
 .PHONY: all clean install
 
-all: distmat
+all: distmat/distmat
 
-install: distmat
+install: distmat/distmat
 	install distmat $(BINDIR)/distmat
 
-distmat: $(ofiles)
+distmat/distmat: $(ofiles)
 	$(CXX) $(CXXFLAGS) $(DFLAGS) $(ofiles) -o $@ -L. $(LIBS)
 
-%.cpp.o: %.cpp $(hfiles)
+distmat/%.cpp.o: distmat/%.cpp $(hfiles)
 	$(CXX) $(CXXFLAGS) $(DFLAGS) -c $< -o $@
 
 clean:
-	rm -f src/*.o
-	rm -f distmat
+	rm -f distmat/*.o
+	rm -f distmat/distmat
 
