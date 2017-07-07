@@ -79,7 +79,11 @@ void usage() {
  * Parse arguments.
  */
 void parse_arguments(const int argc, const char **argv, string &fasta_fn) {
-
+    if (argc==1){
+        usage();
+        exit(1);
+    }
+    
     int c;
     while ((c = getopt(argc, (char *const *)argv, "hsn")) >= 0) {
         switch (c) {
@@ -97,7 +101,11 @@ void parse_arguments(const int argc, const char **argv, string &fasta_fn) {
                 break;
             }
             case '?': {
-                cerr<<"Unknown error"<<std::endl;
+                cerr << "Unknown error" << endl;
+                exit(1);
+            }
+            default: {
+                cerr << "Unknown option " << c << endl;
                 exit(1);
             }
         }
@@ -166,12 +174,29 @@ void compute_pileup(const T &seqs, U &pileup) {
 
 
 /*
- * Compute consensus string.
+ * Compute consensus string (the most common char at each position, except N).
  */
 template <typename T>
 void compute_consensus(const T &pileup, string &consensus) {
-    //todo
+    assert(pileup.size()==consensus.size());
+    
     consensus = string('A', pileup[0].size());
+    for(int i=0; i<pileup.size(); i++){
+        char c='N';
+        int max_freq=-1;
+        const auto &column=pileup[i];
+        
+        for(int d=0;d<128;d++){
+            if(d!='N'){
+                if(column[d]>max_freq){
+                    max_freq=column[d];
+                    c=(char)d;
+                }
+            }
+        }
+        
+        consensus[i]=c;
+    }
 }
 
 
@@ -183,9 +208,9 @@ void compute_consensus(const T &pileup, string &consensus) {
  * 1 - position non-ignored
  */
 template <typename T>
-void compute_mask(const T &pileup, string &consensus) {
+void compute_mask(const T &pileup, string &mask) {
     //todo
-    consensus = string('1', pileup[0].size());
+    mask = string('1', pileup[0].size());
 }
 
 
@@ -284,10 +309,10 @@ int main (int argc, const char **argv) {
     int len=(int)seqs[0].size();
 
 
-    cerr << "Constructing empty matrices" << std::endl;
+    cerr << "Constructing empty matrices" << endl;
     vector<vector<int>> distance_matrix(count, vector<int>(count, 0));
 
-    cerr << "Computing distance matrices" << std::endl;
+    cerr << "Computing distance matrices" << endl;
 
     string ncols=string(len, 'A');
     if (skip_N_cols){
