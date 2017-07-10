@@ -382,8 +382,9 @@ void print_mask(const string &mask){
  * Compute pair matrix (128 x 128).
  */
 template <typename T>
-void compute_pair_matrix(const string &seq1, const string &seq2, T &pair_matrix){
+void compute_pair_matrix(const string &seq1, const string &seq2, const string &mask, T &pair_matrix){
     assert(seq1.size()==seq2.size());
+    assert(seq1.size()==mask.size());
     assert(pair_matrix.size()==128);
     assert(pair_matrix[0].size()==128);
 
@@ -394,7 +395,9 @@ void compute_pair_matrix(const string &seq1, const string &seq2, T &pair_matrix)
     }
     int len=(int)seq1.size();
     for (int i=0;i<len;i++){
-        ++pair_matrix[seq1[i]][seq2[i]];
+        if(mask[i]!='0'){
+            ++pair_matrix[seq1[i]][seq2[i]];
+        }
     }
 }
 
@@ -474,55 +477,23 @@ int distance_norm(const pair_char_t &pair_char) {
 }
 
 
-template <typename T, typename U>
-void compute_jaccard_distance(const T &names, const U &distance_matrix, int count) {
-    cout << "#taxid";
+template <typename T>
+void print_distance_matrix(const T &distance_matrix){
+    assert(distance_matrix.size() == distance_matrix[0].size());
+    int count=distance_matrix.size();
+
+    /*cout << "#taxid";
     for (const string& name : names){
         cout << "\t" << name;
     }
-    cout << endl;
+    cout << endl;*/
 
     for (int i=0;i<count;i++){
-        cout << names[i];
+        //cout << names[i];
         for (int j=0;j<count;j++){
             cout << "\t" << distance_matrix[i][j];
         }
         cout << endl;
-    }
-}
-
-
-/* Compare sequences */
-template<typename T>
-void compare_seqs(const string &s1, const string &s2, T (&counts)[5][5], const string &ncols, bool comp_abs) {
-    // const string &skipped,
-    auto l1=s1.size();
-    auto l2=s2.size();
-    assert (l1==l2);
-
-    for (int i=0;i<5;i++){
-        for (int j=0;j<5;j++){
-            counts[i][j]=0;
-        }
-    }
-
-    for (int i=0;i<l1;i++){
-        if(ncols[i]!='N'){
-            ++counts[nt256_nt4[s1[i]]][nt256_nt4[s2[i]]];
-        }
-    }
-}
-
-template <typename T, typename U>
-void dist_mat(const T &seqs, U &matrix, const string &ncols, bool comp_abs){
-    int counts[5][5];
-    auto no_seqs=seqs.size();
-    int len=(int)seqs[0].size();
-    for (int i=0;i<no_seqs;i++){
-        for (int j=0;j<=i;j++){
-            compare_seqs(seqs[i], seqs[j], counts, ncols, comp_abs);
-            matrix[i][j]=len-(matrix[j][i]=counts[0][0]+counts[1][1]+counts[2][2]+counts[3][3]+counts[4][4]);
-        }
     }
 }
 
@@ -547,7 +518,7 @@ int main (int argc, const char **argv) {
     string consensus(len, '?');
     compute_consensus(pileup, consensus);
     //print_consensus(consensus);
-    
+
 
     cerr << "Computing mask" << endl;
     string mask(len, '?');
@@ -560,28 +531,39 @@ int main (int argc, const char **argv) {
     //print_mask(mask);
 
 
-    //vector<vector<int>> distance_matrix(count, vector<int>(count, 0));
-
-
-
-    string ncols=string(len, 'A');
-
-    if (params.n_strategy==n_strategy_t::IGNORE_GLOBALLY){
-        for (auto& seq : seqs) {
-            for(int i=0;i<seq.size();i++){
-                if(seq[i]=='N'){
-                    ncols[i]='N';
+    cerr << "Computing distance matrix" << endl;
+    vector<vector<int>> pair_matrix(128, vector<int>(128, 0));
+    vector<vector<int>> distance_matrix(count, vector<int>(count, 0));
+    pair_char_t pair_char;
+    for(int i=0;i<count;i++){
+        for(int j=0;j<=count;i++){
+            compute_pair_matrix(seqs[i], seqs[j], mask, pair_matrix);
+            if (params.input==input_t::ACGT){
+                pair_matrix_char_acgt(pair_matrix, pair_char);
+            }
+            else{
+                if (params.input==input_t::BINARY){
+                    pair_matrix_char_binary(pair_matrix, pair_char);
+                }
+                else{
+                    assert(1==2);
                 }
             }
 
+            int dist=0;
+            if(params.n_strategy==n_strategy_t::IGNORE_PAIRWISE_NORM){
+                dist=distance_norm(pair_char);
+            }
+            else{
+                dist=distance(pair_char);
+            }
+            distance_matrix[i][j]=distance_matrix[j][i]=dist;
         }
     }
-    //dist_mat(seqs, distance_matrix, ncols, comp_abs);
-
-    /*
-     * print the output
-     */
 
 
+    print_distance_matrix(distance_matrix);
+    
+    
     return 0;
 }
