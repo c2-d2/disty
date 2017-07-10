@@ -450,7 +450,7 @@ void pair_matrix_char_binary(T &pair_matrix, pair_char_t &pair_char) {
             if (n1_nt4==2 || n2_nt4==2){
                 pair_char.unknown++;
             }
-            else
+            else{
                 if(n1_nt4+n2_nt4==1)
                 {
                     pair_char.matches++;
@@ -458,6 +458,7 @@ void pair_matrix_char_binary(T &pair_matrix, pair_char_t &pair_char) {
                 else {
                     pair_char.mismatches++;
                 }
+            }
         }
     }
 }
