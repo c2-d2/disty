@@ -297,7 +297,7 @@ void compute_mask(string &mask, const T &pileup, float skip_n) {
     int column_sum=accumulate(pileup[0].begin(), pileup[0].end(), 0);
 
 
-    int min_n=floor(skip_n*column_sum);
+    int min_n=ceil(skip_n*column_sum);
 
     int masked_columns=0;
 
@@ -428,10 +428,15 @@ int main (int argc, const char **argv) {
     compute_consensus(pileup, consensus);
     //print_consensus(consensus);
     
-    
+
     cerr << "Computing mask" << endl;
     string mask(len, '?');
-    compute_mask(mask, pileup, params.skip_n);
+    if(params.n_strategy==n_strategy_t::IGNORE_GLOBALLY){
+        compute_mask(mask, pileup, 0.0000001);
+    }
+    else{
+        compute_mask(mask, pileup, params.skip_n);
+    }
     //print_mask(mask);
 
 
