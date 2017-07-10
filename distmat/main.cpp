@@ -39,6 +39,35 @@
 
 #include "kseq.h"
 
+using namespace std;
+
+
+enum class input_t {
+    ACGT,
+    BINARY,
+    _MAX
+};
+
+enum class n_strategy_t {
+    IGNORE_PAIRWISE,
+    IGNORE_PAIRWISE_NORM,
+    IGNORE_GLOBALLY,
+    REPLACE_MAJOR,
+    REPLACE_CLOSEST,
+    _MAX
+};
+
+
+struct params_t {
+    string fasta_fn;
+    input_t input;
+    n_strategy_t n_strategy;
+    float skip_n;
+
+    params_t()
+    :fasta_fn(""), input(input_t::ACGT), n_strategy(n_strategy_t::IGNORE_PAIRWISE), skip_n(0)
+    {}
+};
 
 static const uint8_t nt256_nt4[] = {
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -56,10 +85,12 @@ static const uint8_t nt256_nt4[] = {
 
 KSEQ_INIT(gzFile, gzread)
 
-using namespace std;
 
 /*
  * Print usage.
+ *
+ * todo:
+ *   * replace ints by strings
  */
 void usage() {
     cerr<<
@@ -69,8 +100,17 @@ void usage() {
     "Usage:   distmat <inp.aln>\n"
     "\n"
     "Options:\n"
-    "  -s   skip columns with N's\n"
-    "  -n   don't normalize (to account for skipped columns)\n"
+    "  -n  FLOAT  skip columns having frequency of N > FLOAT [1.00]\n"
+    "  -i  INT    input format [0]\n"
+    "                 0: ACGT\n"
+    "                 1: 01\n"
+    "  -s  INT    strategy to deal with N's [0]\n"
+    "                 0: ignore pairwise\n"
+    "                 1: ignore pairwise and normalize\n"
+    "                 2: ignore globally\n"
+    "                 3: replace by the major allele\n"
+    "                 4: replace by the closest individual\n"
+    "  -h         print help message and exit\n"
     << endl;
     return;
 }
@@ -78,22 +118,31 @@ void usage() {
 /*
  * Parse arguments.
  */
-void parse_arguments(const int argc, const char **argv, string &fasta_fn) {
+void parse_arguments(const int argc, const char **argv, params_t &params) {
     if (argc==1){
         usage();
         exit(1);
     }
-    
+
     int c;
-    while ((c = getopt(argc, (char *const *)argv, "hsn")) >= 0) {
+    while ((c = getopt(argc, (char *const *)argv, "hi:s:n:")) >= 0) {
         switch (c) {
             case 'h': {
                 usage();
                 exit(0);
+            }
+            case 'i': {
+                int val=atoi(optarg);
+                assert(val>=0);
+                assert(val<(int)input_t::_MAX);
+                params.input=static_cast<input_t>(val);
                 break;
             }
             case 's': {
-                //skip_N_cols=true;
+                int val=atoi(optarg);
+                assert(val>=0);
+                assert(val<(int)n_strategy_t::_MAX);
+                params.n_strategy=static_cast<n_strategy_t>(val);
                 break;
             }
             case 'n': {
@@ -110,6 +159,14 @@ void parse_arguments(const int argc, const char **argv, string &fasta_fn) {
             }
         }
     }
+
+    if(optind != argc-1){
+        usage();
+        exit(1);
+    }
+    else {
+        params.fasta_fn=string(argv[optind]);
+    }
 }
 
 
@@ -124,7 +181,7 @@ void load_sequences(const string &fasta_fn, T &names, T &seqs) {
     fp = gzopen(fasta_fn.c_str(), "r");
     seq = kseq_init(fp);
 
-    int len=0; // length of sequencing (for checking)
+    int len=0; // length of sequences (for checking)
 
     while ((l = kseq_read(seq)) >= 0) {
         names.push_back(seq->name.s);
@@ -179,13 +236,13 @@ void compute_pileup(const T &seqs, U &pileup) {
 template <typename T>
 void compute_consensus(const T &pileup, string &consensus) {
     assert(pileup.size()==consensus.size());
-    
+
     consensus = string('A', pileup[0].size());
     for(int i=0; i<pileup.size(); i++){
         char c='N';
         int max_freq=-1;
         const auto &column=pileup[i];
-        
+
         for(int d=0;d<128;d++){
             if(d!='N'){
                 if(column[d]>max_freq){
@@ -194,7 +251,7 @@ void compute_consensus(const T &pileup, string &consensus) {
                 }
             }
         }
-        
+
         consensus[i]=c;
     }
 }
@@ -297,10 +354,8 @@ void dist_mat(const T &seqs, U &matrix, const string &ncols, bool comp_abs){
 
 
 int main (int argc, const char **argv) {
-    bool skip_N_cols=false;
-    bool comp_abs=false;
-    string fasta_fn;
-    parse_arguments(argc, argv, fasta_fn);
+    params_t params;
+    parse_arguments(argc, argv, params);
 
     vector<string> names, seqs;
     load_sequences(argv[1], names, seqs);
@@ -315,7 +370,8 @@ int main (int argc, const char **argv) {
     cerr << "Computing distance matrices" << endl;
 
     string ncols=string(len, 'A');
-    if (skip_N_cols){
+
+    if (params.n_strategy==n_strategy_t::IGNORE_GLOBALLY){
         for (auto& seq : seqs) {
             for(int i=0;i<seq.size();i++){
                 if(seq[i]=='N'){
@@ -325,7 +381,7 @@ int main (int argc, const char **argv) {
 
         }
     }
-    dist_mat(seqs, distance_matrix, ncols, comp_abs);
+    //dist_mat(seqs, distance_matrix, ncols, comp_abs);
 
     /*
      * print the output
