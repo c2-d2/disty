@@ -33,6 +33,7 @@
 #include <cassert>
 #include <string>
 #include <vector>
+#include <numeric>
 #include <cmath>
 #include <zlib.h>
 #include <getopt.h>
@@ -65,7 +66,7 @@ struct params_t {
     float skip_n;
 
     params_t()
-    :fasta_fn(""), input(input_t::ACGT), n_strategy(n_strategy_t::IGNORE_PAIRWISE), skip_n(0)
+    :fasta_fn(""), input(input_t::ACGT), n_strategy(n_strategy_t::IGNORE_PAIRWISE), skip_n(1.0)
     {}
 };
 
@@ -118,7 +119,7 @@ void usage() {
 /*
  * Parse arguments.
  */
-void parse_arguments(const int argc, const char **argv, params_t &params) {
+void parse_arguments(int argc, const char **argv, params_t &params) {
     if (argc==1){
         usage();
         exit(1);
@@ -146,7 +147,10 @@ void parse_arguments(const int argc, const char **argv, params_t &params) {
                 break;
             }
             case 'n': {
-                //comp_abs=true;
+                float val=atof(optarg);
+                assert(val>=0.0);
+                assert(val<=1.0);
+                params.skip_n=val;
                 break;
             }
             case '?': {
@@ -160,12 +164,15 @@ void parse_arguments(const int argc, const char **argv, params_t &params) {
         }
     }
 
-    if(optind != argc-1){
+    argc -= optind;
+    argv += optind;
+
+    if(argc != 1){
         usage();
         exit(1);
     }
     else {
-        params.fasta_fn=string(argv[optind]);
+        params.fasta_fn=string(argv[0]);
     }
 }
 
@@ -214,20 +221,35 @@ void load_sequences(const string &fasta_fn, T &names, T &seqs) {
  */
 template <typename T, typename U>
 void compute_pileup(const T &seqs, U &pileup) {
+    assert(seqs[0].size()==pileup.size());
+    assert(pileup[0].size()==128);
     auto len=seqs[0].size();
     for(int i=0; i<len; i++){
-        for(int j=0; j<128; i++){
-            pileup[i][j]=0;
+        for(int c=0; c<128; c++){
+            pileup[i][c]=0;
         }
     }
 
     for (const auto &seq: seqs){
         for(int i=0; i<len; i++){
-            int c=seq[i];
+            unsigned char c=seq[i];
             ++pileup[i][c];
         }
     }
 }
+
+template <typename T>
+void print_pileup(const T &pileup){
+    assert(pileup[0].size()==128);
+    for (int i=0;i<pileup.size();i++){
+        cout << i;
+        for(int c=0;c<128;c++){
+            cout << "\t" << pileup[i][c];
+        }
+        cout << endl;
+    }
+}
+
 
 
 /*
@@ -236,8 +258,8 @@ void compute_pileup(const T &seqs, U &pileup) {
 template <typename T>
 void compute_consensus(const T &pileup, string &consensus) {
     assert(pileup.size()==consensus.size());
+    assert(pileup[0].size()==128);
 
-    consensus = string('A', pileup[0].size());
     for(int i=0; i<pileup.size(); i++){
         char c='N';
         int max_freq=-1;
@@ -256,6 +278,9 @@ void compute_consensus(const T &pileup, string &consensus) {
     }
 }
 
+void print_consensus(const string &consensus){
+    cout << consensus << endl;
+}
 
 /*
  * Compute mask.
@@ -265,9 +290,41 @@ void compute_consensus(const T &pileup, string &consensus) {
  * 1 - position non-ignored
  */
 template <typename T>
-void compute_mask(const T &pileup, string &mask) {
-    //todo
-    mask = string('1', pileup[0].size());
+void compute_mask(string &mask, const T &pileup, float skip_n) {
+    assert(pileup.size()==mask.size());
+    assert(pileup[0].size()==128);
+
+    int column_sum=accumulate(pileup[0].begin(), pileup[0].end(), 0);
+
+
+    int min_n=floor(skip_n*column_sum);
+
+    int masked_columns=0;
+
+    for(int i=0; i<pileup.size(); i++){
+        int this_column_sum=accumulate(pileup[i].begin(), pileup[i].end(), 0);
+        assert(this_column_sum==column_sum);
+        int ns=pileup[i]['n']+pileup[i]['N'];
+        if (ns >= min_n){
+            mask[i]='0';
+            masked_columns++;
+        }
+        else{
+            if(ns>0)
+            {
+                mask[i]='N';
+            }
+            else{
+                mask[i]='1';
+            }
+        }
+    }
+
+    cerr << "Number of masked columns: " << masked_columns << " (out of " << pileup.size() << " positions, mask N rate: " << skip_n << ", threshold: " << min_n << " Ns, number of samples: " << column_sum << ")" << endl;
+}
+
+void print_mask(const string &mask){
+    cout << mask << endl;
 }
 
 
@@ -296,9 +353,6 @@ T compute_jaccard_distance(U &pair_matrix) {
 }
 
 
-/*
- * Print distance matrix.
- */
 template <typename T, typename U>
 void compute_jaccard_distance(const T &names, const U &distance_matrix, int count) {
     cout << "#taxid";
@@ -357,17 +411,33 @@ int main (int argc, const char **argv) {
     params_t params;
     parse_arguments(argc, argv, params);
 
+    cerr << "Loading sequences from " << params.fasta_fn << endl;
     vector<string> names, seqs;
-    load_sequences(argv[1], names, seqs);
+    load_sequences(params.fasta_fn, names, seqs);
 
     int count=(int)seqs.size();
     int len=(int)seqs[0].size();
 
+    cerr << "Computing pileup" << endl;
+    vector<vector<int>> pileup(len, vector<int>(128));
+    compute_pileup(seqs, pileup);
+    //print_pileup(pileup);
 
-    cerr << "Constructing empty matrices" << endl;
-    vector<vector<int>> distance_matrix(count, vector<int>(count, 0));
+    cerr << "Computing consensus" << endl;
+    string consensus(len, '?');
+    compute_consensus(pileup, consensus);
+    //print_consensus(consensus);
+    
+    
+    cerr << "Computing mask" << endl;
+    string mask(len, '?');
+    compute_mask(mask, pileup, params.skip_n);
+    //print_mask(mask);
 
-    cerr << "Computing distance matrices" << endl;
+
+    //vector<vector<int>> distance_matrix(count, vector<int>(count, 0));
+
+
 
     string ncols=string(len, 'A');
 
