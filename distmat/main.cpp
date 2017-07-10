@@ -70,7 +70,13 @@ struct params_t {
     {}
 };
 
-static const uint8_t nt256_nt4[] = {
+struct pair_char_t {
+    int matches;
+    int mismatches;
+    int unknown;
+};
+
+static const uint8_t acgt_nt256_nt4[] = {
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 4, 1, 4, 4, 4, 2,
@@ -82,6 +88,50 @@ static const uint8_t nt256_nt4[] = {
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
+
+
+static const uint8_t acgt_nt256_nt16[] = {
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    1, 2, 4, 8, 15,15,15,15, 15,15,15,15, 15, 0 /*=*/,15,15,
+    15, 1,14, 2, 13,15,15, 4, 11,15,15,12, 15, 3,15,15,
+    15,15, 5, 6,  8,15, 7, 9, 15,10,15,15, 15,15,15,15,
+    15, 1,14, 2, 13,15,15, 4, 11,15,15,12, 15, 3,15,15,
+    15,15, 5, 6,  8,15, 7, 9, 15,10,15,15, 15,15,15,15,
+
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15
+};
+
+static const uint8_t acgt_nt16_nt4[] = { 4, 0, 1, 4, 2, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4 };
+
+
+static const uint8_t binary_nt256_nt4[] = {
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+    0,1,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+    2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2
+};
 
 
 KSEQ_INIT(gzFile, gzread)
@@ -333,6 +383,10 @@ void print_mask(const string &mask){
  */
 template <typename T>
 void compute_pair_matrix(const string &seq1, const string &seq2, T &pair_matrix){
+    assert(seq1.size()==seq2.size());
+    assert(pair_matrix.size()==128);
+    assert(pair_matrix[0].size()==128);
+
     for(int i=0; i<128; i++){
         for(int j=0; j<128; j++){
             pair_matrix[i][j]=0;
@@ -346,11 +400,87 @@ void compute_pair_matrix(const string &seq1, const string &seq2, T &pair_matrix)
 
 
 /*
- * Compute distances.
+ * Compute characteristics of a pair matrix.
  */
-template <typename T, typename U>
-T compute_jaccard_distance(U &pair_matrix) {
+
+template <typename T>
+void pair_matrix_char_acgt(T &pair_matrix, pair_char_t &pair_char) {
+    assert(pair_matrix.size()==128);
+    assert(pair_matrix[0].size()==128);
+
+    pair_char.matches=0;
+    pair_char.mismatches=0;
+    pair_char.unknown=0;
+
+    for(unsigned char i=0;i<128;i++){
+        char n1_nt4=acgt_nt256_nt4[i];
+        for(unsigned char j=0;j<128;j++){
+            char n2_nt4=acgt_nt256_nt4[j];
+
+            if(n1_nt4==n2_nt4){
+                if (n1_nt4==4 || n2_nt4==4){
+                    pair_char.unknown++;
+                }
+                else{
+                    pair_char.matches++;
+                }
+            }
+            else {
+                pair_char.mismatches++;
+            }
+        }
+    }
+
 }
+
+template <typename T>
+void pair_matrix_char_binary(T &pair_matrix, pair_char_t &pair_char) {
+    assert(pair_matrix.size()==128);
+    assert(pair_matrix[0].size()==128);
+
+    pair_char.matches=0;
+    pair_char.mismatches=0;
+    pair_char.unknown=0;
+
+    for(unsigned char i=0;i<128;i++){
+        char n1_nt4=binary_nt256_nt4[i];
+        for(unsigned char j=0;j<128;j++){
+            char n2_nt4=binary_nt256_nt4[j];
+
+            if (n1_nt4==2 || n2_nt4==2){
+                pair_char.unknown++;
+            }
+            else
+                if(n1_nt4+n2_nt4==1)
+                {
+                    pair_char.matches++;
+                }
+                else {
+                    pair_char.mismatches++;
+                }
+        }
+    }
+}
+
+
+
+
+/*template <typename T>
+int distance_acgt_norm(T &pair_matrix) {
+    assert(pair_matrix.size()==128);
+    assert(pair_matrix[0].size()==128);
+
+    int matches=0;
+
+    for(char c: {'A', 'C', 'G', 'T', 'a', 'c', 'g', 't'}){
+        matches+=pair_matrix[c][c];
+    }
+
+    int distance=len-matches;
+    assert(distance>=0);
+
+    return distance;
+}*/
 
 
 template <typename T, typename U>
