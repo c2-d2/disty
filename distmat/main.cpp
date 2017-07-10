@@ -159,8 +159,8 @@ void usage() {
     "                 0: ignore pairwise\n"
     "                 1: ignore pairwise and normalize\n"
     "                 2: ignore globally\n"
-    "                 3: replace by the major allele\n"
-    "                 4: replace by the closest individual\n"
+    "                 3: replace by the major allele (not implemented yet)\n"
+    "                 4: replace by the closest individual (not implemented yet)\n"
     "  -h         print help message and exit\n"
     << endl;
     return;
@@ -464,24 +464,14 @@ void pair_matrix_char_binary(T &pair_matrix, pair_char_t &pair_char) {
 }
 
 
+int distance(const pair_char_t &pair_char) {
+    return pair_char.mismatches;
+}
 
-
-/*template <typename T>
-int distance_acgt_norm(T &pair_matrix) {
-    assert(pair_matrix.size()==128);
-    assert(pair_matrix[0].size()==128);
-
-    int matches=0;
-
-    for(char c: {'A', 'C', 'G', 'T', 'a', 'c', 'g', 't'}){
-        matches+=pair_matrix[c][c];
-    }
-
-    int distance=len-matches;
-    assert(distance>=0);
-
-    return distance;
-}*/
+int distance_norm(const pair_char_t &pair_char) {
+    float multiplicator=1.0*(pair_char.matches+pair_char.matches+pair_char.unknown)/(pair_char.matches+pair_char.mismatches);
+    return round(multiplicator * pair_char.mismatches);
+}
 
 
 template <typename T, typename U>
@@ -500,7 +490,6 @@ void compute_jaccard_distance(const T &names, const U &distance_matrix, int coun
         cout << endl;
     }
 }
-
 
 
 /* Compare sequences */
