@@ -424,18 +424,18 @@ void pair_matrix_char_acgt(T &pair_matrix, pair_char_t &pair_char) {
 
             if(n1_nt4==n2_nt4){
                 if (n1_nt4==4 || n2_nt4==4){
-                    pair_char.unknown++;
+                    pair_char.unknown+=pair_matrix[i][j];
                 }
                 else{
-                    pair_char.matches++;
+                    pair_char.matches+=pair_matrix[i][j];
                 }
             }
             else {
-                pair_char.mismatches++;
+                pair_char.mismatches+=pair_matrix[i][j];
             }
         }
     }
-
+    //cout << pair_char.matches << " " << pair_char.mismatches << " " << pair_char.unknown << endl;
 }
 
 template <typename T>
@@ -466,6 +466,8 @@ void pair_matrix_char_binary(T &pair_matrix, pair_char_t &pair_char) {
             }
         }
     }
+
+    //cout << pair_char.matches << " " << pair_char.mismatches << " " << pair_char.unknown << endl;
 }
 
 
