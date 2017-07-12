@@ -418,16 +418,16 @@ void pair_matrix_char_acgt(T &pair_matrix, pair_char_t &pair_char) {
         for(unsigned char j=0;j<128;j++){
             char n2_nt4=acgt_nt256_nt4[j];
 
-            if(n1_nt4==n2_nt4){
-                if (n1_nt4==4 || n2_nt4==4){
-                    pair_char.unknown+=pair_matrix[i][j];
-                }
-                else{
+            if (n1_nt4==4 || n2_nt4==4){
+                pair_char.unknown+=pair_matrix[i][j];
+            }
+            else{
+                if(n1_nt4==n2_nt4){
                     pair_char.matches+=pair_matrix[i][j];
                 }
-            }
-            else {
-                pair_char.mismatches+=pair_matrix[i][j];
+                else {
+                    pair_char.mismatches+=pair_matrix[i][j];
+                }
             }
         }
     }
@@ -511,7 +511,7 @@ int main (int argc, const char **argv) {
     cerr << "Loading sequences from " << params.fasta_fn << endl;
     vector<string> names, seqs;
     load_sequences(params.fasta_fn, names, seqs);
-    print_sequences(seqs);
+    //print_sequences(seqs);
 
     int count=(int)seqs.size();
     int len=(int)seqs[0].size();
@@ -536,7 +536,7 @@ int main (int argc, const char **argv) {
         int min_n=ceil(count*params.skip_n);
         compute_mask(mask, pileup, min_n);
     }
-    print_mask(mask);
+    //print_mask(mask);
 
 
     cerr << "Computing distance matrix" << endl;
@@ -550,7 +550,7 @@ int main (int argc, const char **argv) {
 
     for(int i=0;i<count;i++){
         for(int j=0;j<=i;j++){
-            cerr << "\n(" << i << "," << j << ")" << endl;
+            //cerr << "\n(" << i << "," << j << ")" << endl;
 
             /*
              * 1) Pair matrix
@@ -573,7 +573,7 @@ int main (int argc, const char **argv) {
                 }
             }
 
-            print_pair_matrix_char(pair_char);
+            //print_pair_matrix_char(pair_char);
 
             /*
              * 3) Distance
