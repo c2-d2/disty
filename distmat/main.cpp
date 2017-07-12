@@ -73,7 +73,7 @@ string USAGE=
 "                 0: ignore pairwisely\n"
 "                 1: ignore pairwisely and normalize\n"
 "                 2: ignore globally\n"
-"                 3: replace by the major allele (not implemented yet)\n"
+"                 3: replace by the major allele\n"
 "                 4: replace by the closest individual (not implemented yet)\n"
 "  -h         print help message and exit\n";
 
@@ -109,25 +109,25 @@ static const uint8_t acgt_nt256_nt4[] = {
 
 
 /*
-static const uint8_t acgt_nt256_nt16[] = {
-    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
-    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
-    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
-    1 , 2, 4, 8, 15,15,15,15, 15,15,15,15, 15, 0,15,15,
-    15, 1,14, 2, 13,15,15, 4, 11,15,15,12, 15, 3,15,15,
-    15,15, 5, 6,  8,15, 7, 9, 15,10,15,15, 15,15,15,15,
-    15, 1,14, 2, 13,15,15, 4, 11,15,15,12, 15, 3,15,15,
-    15,15, 5, 6,  8,15, 7, 9, 15,10,15,15, 15,15,15,15,
+ static const uint8_t acgt_nt256_nt16[] = {
+ 15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+ 15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+ 15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+ 1 , 2, 4, 8, 15,15,15,15, 15,15,15,15, 15, 0,15,15,
+ 15, 1,14, 2, 13,15,15, 4, 11,15,15,12, 15, 3,15,15,
+ 15,15, 5, 6,  8,15, 7, 9, 15,10,15,15, 15,15,15,15,
+ 15, 1,14, 2, 13,15,15, 4, 11,15,15,12, 15, 3,15,15,
+ 15,15, 5, 6,  8,15, 7, 9, 15,10,15,15, 15,15,15,15,
 
-    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
-    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
-    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
-    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
-    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
-    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
-    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
-    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15
-};*/
+ 15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+ 15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+ 15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+ 15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+ 15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+ 15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+ 15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+ 15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15
+ };*/
 
 //static const uint8_t acgt_nt16_nt4[] = { 4, 0, 1, 4, 2, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4 };
 
@@ -235,7 +235,7 @@ void load_sequences(const string &fasta_fn, T &names, T &seqs) {
         names.push_back(seq->name.s);
         string s(seq->seq.s);
         for (auto & c: s) {
-            c = toupper(c); 
+            c = toupper(c);
         }
         if(len!=0){
             assert(len==static_cast<int>(s.size()));
@@ -508,6 +508,8 @@ int main (int argc, const char **argv) {
     params_t params;
     parse_arguments(argc, argv, params);
 
+    assert(params.n_strategy!=n_strategy_t::REPLACE_CLOSEST);
+
     cerr << "Loading sequences from " << params.fasta_fn << endl;
     vector<string> names, seqs;
     load_sequences(params.fasta_fn, names, seqs);
@@ -521,10 +523,12 @@ int main (int argc, const char **argv) {
     compute_pileup(seqs, pileup);
     //print_pileup(pileup);
 
-    cerr << "Computing consensus" << endl;
     string consensus(len, '?');
-    compute_consensus(pileup, consensus);
-    //print_consensus(consensus);
+    if(params.n_strategy==n_strategy_t::REPLACE_MAJOR){
+        cerr << "Computing consensus" << endl;
+        compute_consensus(pileup, consensus);
+        //print_consensus(consensus);
+    }
 
 
     cerr << "Computing mask" << endl;
@@ -544,10 +548,21 @@ int main (int argc, const char **argv) {
     vector<vector<int>> distance_matrix(count, vector<int>(count, 0));
     pair_char_t pair_char;
 
+    if(params.n_strategy==n_strategy_t::REPLACE_MAJOR){
+        cerr << "Replacing N's by major alleles" << endl;
+        for (auto &seq: seqs){
+            for(int i=0;i<static_cast<int>(seq.size());i++){
+                if (seq[i]=='N'||seq[i]=='N'){
+                    seq[i]=consensus[i];
+                }
+            }
+        }
+    }
+
+
     /*
      * For each pair:
      */
-
     for(int i=0;i<count;i++){
         for(int j=0;j<=i;j++){
             //cerr << "\n(" << i << "," << j << ")" << endl;
@@ -592,7 +607,7 @@ int main (int argc, const char **argv) {
 
 
     print_distance_matrix(distance_matrix, names);
-    
-    
+
+
     return 0;
 }

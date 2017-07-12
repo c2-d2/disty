@@ -19,6 +19,9 @@ all:
 				echo "$$CMD"; \
 				echo "======================================"; \
 				echo ; \
+				echo $$EXP; \
+				echo $$OBS; \
+				echo ; \
 				$$CMD > "$$OBS" 2> /dev/null; \
 				diff "$$OBS" "$$EXP"; \
 				echo "OK"; \
