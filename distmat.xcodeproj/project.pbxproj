@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		FCE6C63C1F0FD04B00EE50DE /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FCE6C63B1F0FD04B00EE50DE /* main.cpp */; };
+		FC6DB7381F16D6EB00DCFDD5 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FC6DB7371F16D6EB00DCFDD5 /* main.cpp */; };
+		FC6DB73A1F16D71100DCFDD5 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = FC6DB7391F16D71100DCFDD5 /* Makefile */; };
 		FCE6C6441F0FD8AC00EE50DE /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = FCE6C6431F0FD8AC00EE50DE /* libz.tbd */; };
 /* End PBXBuildFile section */
 
@@ -24,8 +25,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		FC6DB7371F16D6EB00DCFDD5 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = src/main.cpp; sourceTree = SOURCE_ROOT; };
+		FC6DB7391F16D71100DCFDD5 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = SOURCE_ROOT; };
 		FCE6C6381F0FD04B00EE50DE /* distmat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = distmat; sourceTree = BUILT_PRODUCTS_DIR; };
-		FCE6C63B1F0FD04B00EE50DE /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		FCE6C6431F0FD8AC00EE50DE /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -61,7 +63,8 @@
 		FCE6C63A1F0FD04B00EE50DE /* distmat */ = {
 			isa = PBXGroup;
 			children = (
-				FCE6C63B1F0FD04B00EE50DE /* main.cpp */,
+				FC6DB7391F16D71100DCFDD5 /* Makefile */,
+				FC6DB7371F16D6EB00DCFDD5 /* main.cpp */,
 			);
 			path = distmat;
 			sourceTree = "<group>";
@@ -131,7 +134,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FCE6C63C1F0FD04B00EE50DE /* main.cpp in Sources */,
+				FC6DB73A1F16D71100DCFDD5 /* Makefile in Sources */,
+				FC6DB7381F16D6EB00DCFDD5 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -260,6 +264,7 @@
 				FCE6C6411F0FD04B00EE50DE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
