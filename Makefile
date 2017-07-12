@@ -13,7 +13,7 @@ hfiles    = $(wildcard distmat/*.h)
 all: distmat/distmat
 
 install: distmat/distmat
-	install distmat $(BINDIR)/distmat
+	install distmap/distmat $(BINDIR)/distmat
 
 distmat/distmat: $(ofiles)
 	$(CXX) $(CXXFLAGS) $(DFLAGS) $(ofiles) -o $@ -L. $(LIBS)
