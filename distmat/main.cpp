@@ -58,6 +58,24 @@ enum class n_strategy_t {
     _MAX
 };
 
+string USAGE=
+"\n"
+"Program: distmat - compute distance matrix from a FASTA alignment file\n"
+"\n"
+"Usage:   distmat <inp.aln>\n"
+"\n"
+"Options:\n"
+"  -n  FLOAT  skip columns having frequency of N > FLOAT [1.00]\n"
+"  -i  INT    input format [0]\n"
+"                 0: ACGT\n"
+"                 1: 01\n"
+"  -s  INT    strategy to deal with N's [0]\n"
+"                 0: ignore pairwisely\n"
+"                 1: ignore pairwisely and normalize\n"
+"                 2: ignore globally\n"
+"                 3: replace by the major allele (not implemented yet)\n"
+"                 4: replace by the closest individual (not implemented yet)\n"
+"  -h         print help message and exit\n";
 
 struct params_t {
     string fasta_fn;
@@ -139,40 +157,11 @@ KSEQ_INIT(gzFile, gzread)
 
 
 /*
- * Print usage.
- *
- * todo:
- *   * replace ints by strings
- */
-void usage() {
-    cerr<<
-    "\n"
-    "Program: distmat - compute distance matrix from a FASTA alignment file\n"
-    "\n"
-    "Usage:   distmat <inp.aln>\n"
-    "\n"
-    "Options:\n"
-    "  -n  FLOAT  skip columns having frequency of N > FLOAT [1.00]\n"
-    "  -i  INT    input format [0]\n"
-    "                 0: ACGT\n"
-    "                 1: 01\n"
-    "  -s  INT    strategy to deal with N's [0]\n"
-    "                 0: ignore pairwise\n"
-    "                 1: ignore pairwise and normalize\n"
-    "                 2: ignore globally\n"
-    "                 3: replace by the major allele (not implemented yet)\n"
-    "                 4: replace by the closest individual (not implemented yet)\n"
-    "  -h         print help message and exit\n"
-    << endl;
-    return;
-}
-
-/*
  * Parse arguments.
  */
 void parse_arguments(int argc, const char **argv, params_t &params) {
     if (argc==1){
-        usage();
+        cerr << USAGE << endl;
         exit(1);
     }
 
@@ -180,7 +169,7 @@ void parse_arguments(int argc, const char **argv, params_t &params) {
     while ((c = getopt(argc, (char *const *)argv, "hi:s:n:")) >= 0) {
         switch (c) {
             case 'h': {
-                usage();
+                cout << USAGE << endl;
                 exit(0);
             }
             case 'i': {
@@ -219,7 +208,7 @@ void parse_arguments(int argc, const char **argv, params_t &params) {
     argv += optind;
 
     if(argc != 1){
-        usage();
+        cerr << USAGE << endl;
         exit(1);
     }
     else {
@@ -249,7 +238,7 @@ void load_sequences(const string &fasta_fn, T &names, T &seqs) {
             c = toupper(c); 
         }
         if(len!=0){
-            assert(len==s.size());
+            assert(len==static_cast<int>(s.size()));
         }
         else{
             len=(int)s.size();
@@ -267,6 +256,14 @@ void load_sequences(const string &fasta_fn, T &names, T &seqs) {
     assert(seqs.size()>0);
 }
 
+template <typename T>
+void print_sequences(T &seqs) {
+    cerr << endl;
+    for (auto const &s: seqs){
+        cerr << s << endl;
+    }
+    cerr << endl;
+}
 
 /*
  * Compute pileup (len x 128).
@@ -276,14 +273,14 @@ void compute_pileup(const T &seqs, U &pileup) {
     assert(seqs[0].size()==pileup.size());
     assert(pileup[0].size()==128);
     auto len=seqs[0].size();
-    for(int i=0; i<len; i++){
+    for(int i=0; i<static_cast<int>(len); i++){
         for(int c=0; c<128; c++){
             pileup[i][c]=0;
         }
     }
 
     for (const auto &seq: seqs){
-        for(int i=0; i<len; i++){
+        for(int i=0; i<static_cast<int>(len); i++){
             unsigned char c=seq[i];
             ++pileup[i][c];
         }
@@ -312,7 +309,7 @@ void compute_consensus(const T &pileup, string &consensus) {
     assert(pileup.size()==consensus.size());
     assert(pileup[0].size()==128);
 
-    for(int i=0; i<pileup.size(); i++){
+    for(int i=0; i<static_cast<int>(pileup.size()); i++){
         char c='N';
         int max_freq=-1;
         const auto &column=pileup[i];
@@ -337,27 +334,24 @@ void print_consensus(const string &consensus){
 /*
  * Compute mask.
  *
+ * if N >= skip_n, then mask the column
+ *
  * 0 - position ignored
  * N - position non-ignored, containg Ns
  * 1 - position non-ignored
  */
 template <typename T>
-void compute_mask(string &mask, const T &pileup, float skip_n) {
+void compute_mask(string &mask, const T &pileup, int n_thres) {
     assert(pileup.size()==mask.size());
     assert(pileup[0].size()==128);
 
     int column_sum=accumulate(pileup[0].begin(), pileup[0].end(), 0);
 
-
-    int min_n=ceil(skip_n*column_sum);
-
     int masked_columns=0;
 
-    for(int i=0; i<pileup.size(); i++){
-        int this_column_sum=accumulate(pileup[i].begin(), pileup[i].end(), 0);
-        assert(this_column_sum==column_sum);
+    for(int i=0; i<static_cast<int>(pileup.size()); i++){
         int ns=pileup[i]['n']+pileup[i]['N'];
-        if (ns >= min_n){
+        if (ns >= n_thres){
             mask[i]='0';
             masked_columns++;
         }
@@ -372,11 +366,11 @@ void compute_mask(string &mask, const T &pileup, float skip_n) {
         }
     }
 
-    cerr << "Number of masked columns: " << masked_columns << " (out of " << pileup.size() << " positions, mask N rate: " << skip_n << ", threshold: " << min_n << " Ns, number of samples: " << column_sum << ")" << endl;
+    cerr << "Number of masked columns: " << masked_columns << " (out of " << pileup.size() << " positions, threshold: " << n_thres << " Ns, number of samples: " << column_sum << ")" << endl;
 }
 
 void print_mask(const string &mask){
-    cout << mask << endl;
+    cerr << mask << endl;
 }
 
 
@@ -406,6 +400,8 @@ void compute_pair_matrix(const string &seq1, const string &seq2, const string &m
 
 /*
  * Compute characteristics of a pair matrix.
+ *
+ * (matches, mismatches, unknown)
  */
 
 template <typename T>
@@ -466,10 +462,15 @@ void pair_matrix_char_binary(T &pair_matrix, pair_char_t &pair_char) {
             }
         }
     }
-
-    //cout << pair_char.matches << " " << pair_char.mismatches << " " << pair_char.unknown << endl;
 }
 
+void print_pair_matrix_char(pair_char_t &pair_char){
+    cerr << pair_char.matches << "\t" << pair_char.mismatches << "\t" << pair_char.unknown << endl;
+}
+
+/*
+ * Compute distance.
+ */
 
 int distance(const pair_char_t &pair_char) {
     return pair_char.mismatches;
@@ -510,6 +511,7 @@ int main (int argc, const char **argv) {
     cerr << "Loading sequences from " << params.fasta_fn << endl;
     vector<string> names, seqs;
     load_sequences(params.fasta_fn, names, seqs);
+    print_sequences(seqs);
 
     int count=(int)seqs.size();
     int len=(int)seqs[0].size();
@@ -528,21 +530,37 @@ int main (int argc, const char **argv) {
     cerr << "Computing mask" << endl;
     string mask(len, '?');
     if(params.n_strategy==n_strategy_t::IGNORE_GLOBALLY){
-        compute_mask(mask, pileup, 0.0000001);
+        compute_mask(mask, pileup, 1);
     }
     else{
-        compute_mask(mask, pileup, params.skip_n);
+        int min_n=ceil(count*params.skip_n);
+        compute_mask(mask, pileup, min_n);
     }
-    //print_mask(mask);
+    print_mask(mask);
 
 
     cerr << "Computing distance matrix" << endl;
     vector<vector<int>> pair_matrix(128, vector<int>(128, 0));
     vector<vector<int>> distance_matrix(count, vector<int>(count, 0));
     pair_char_t pair_char;
+
+    /*
+     * For each pair:
+     */
+
     for(int i=0;i<count;i++){
         for(int j=0;j<=i;j++){
+            cerr << "\n(" << i << "," << j << ")" << endl;
+
+            /*
+             * 1) Pair matrix
+             */
             compute_pair_matrix(seqs[i], seqs[j], mask, pair_matrix);
+
+            /*
+             * 2) Characteristics
+             */
+
             if (params.input==input_t::ACGT){
                 pair_matrix_char_acgt(pair_matrix, pair_char);
             }
@@ -554,6 +572,12 @@ int main (int argc, const char **argv) {
                     assert(false);
                 }
             }
+
+            print_pair_matrix_char(pair_char);
+
+            /*
+             * 3) Distance
+             */
 
             int dist=0;
             if(params.n_strategy==n_strategy_t::IGNORE_PAIRWISE_NORM){
