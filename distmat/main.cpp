@@ -481,19 +481,20 @@ int distance_norm(const pair_char_t &pair_char) {
 }
 
 
-template <typename T>
-void print_distance_matrix(const T &distance_matrix){
+template <typename T, typename U>
+void print_distance_matrix(const T &distance_matrix, const U &names){
     assert(distance_matrix.size() == distance_matrix[0].size());
+    assert(distance_matrix.size() == names.size());
     int count=static_cast<int>(distance_matrix.size());
 
-    /*cout << "#taxid";
+    //cout << "";
     for (const string& name : names){
         cout << "\t" << name;
     }
-    cout << endl;*/
+    cout << endl;
 
     for (int i=0;i<count;i++){
-        //cout << names[i];
+        cout << names[i];
         for (int j=0;j<count;j++){
             cout << "\t" << distance_matrix[i][j];
         }
@@ -550,7 +551,7 @@ int main (int argc, const char **argv) {
                     pair_matrix_char_binary(pair_matrix, pair_char);
                 }
                 else{
-                    assert(1==2);
+                    assert(false);
                 }
             }
 
@@ -566,7 +567,7 @@ int main (int argc, const char **argv) {
     }
 
 
-    print_distance_matrix(distance_matrix);
+    print_distance_matrix(distance_matrix, names);
     
     
     return 0;
