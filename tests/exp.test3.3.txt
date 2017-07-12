@@ -1,0 +1,4 @@
+	seq1	seq2	seq3
+seq1	0	0	0
+seq2	0	0	0
+seq3	0	0	0

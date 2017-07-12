@@ -73,7 +73,7 @@ string USAGE=
 "                 0: ignore pairwisely\n"
 "                 1: ignore pairwisely and normalize\n"
 "                 2: ignore globally\n"
-"                 3: replace by the major allele (not implemented yet)\n"
+"                 3: replace by the major allele\n"
 "                 4: replace by the closest individual (not implemented yet)\n"
 "  -h         print help message and exit\n";
 
@@ -544,6 +544,16 @@ int main (int argc, const char **argv) {
     vector<vector<int>> distance_matrix(count, vector<int>(count, 0));
     pair_char_t pair_char;
 
+    if(params.n_strategy==n_strategy_t::REPLACE_MAJOR){
+        cerr << "Replacing N's by major alleles" << endl;
+        for (auto &seq: seqs){
+            for(int i=0;i<static_cast<int>(seq.size());i++){
+                if (seq[i]=='N'||seq[i]=='N'){
+                    seq[i]=consensus[i];
+                }
+            }
+        }
+    }
     /*
      * For each pair:
      */
