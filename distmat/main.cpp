@@ -508,6 +508,8 @@ int main (int argc, const char **argv) {
     params_t params;
     parse_arguments(argc, argv, params);
 
+    assert(params.n_strategy!=n_strategy_t::REPLACE_CLOSEST);
+
     cerr << "Loading sequences from " << params.fasta_fn << endl;
     vector<string> names, seqs;
     load_sequences(params.fasta_fn, names, seqs);
