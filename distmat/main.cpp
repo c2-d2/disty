@@ -477,7 +477,7 @@ int distance(const pair_char_t &pair_char) {
 }
 
 int distance_norm(const pair_char_t &pair_char) {
-    float multiplicator=1.0*(pair_char.matches+pair_char.matches+pair_char.unknown)/(pair_char.matches+pair_char.mismatches);
+    float multiplicator=1.0*(pair_char.matches+pair_char.mismatches+pair_char.unknown)/(pair_char.matches+pair_char.mismatches);
     return round(multiplicator * pair_char.mismatches);
 }
 
