@@ -90,11 +90,12 @@ static const uint8_t acgt_nt256_nt4[] = {
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
 
 
+/*
 static const uint8_t acgt_nt256_nt16[] = {
     15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
     15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
     15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
-    1, 2, 4, 8, 15,15,15,15, 15,15,15,15, 15, 0 /*=*/,15,15,
+    1 , 2, 4, 8, 15,15,15,15, 15,15,15,15, 15, 0,15,15,
     15, 1,14, 2, 13,15,15, 4, 11,15,15,12, 15, 3,15,15,
     15,15, 5, 6,  8,15, 7, 9, 15,10,15,15, 15,15,15,15,
     15, 1,14, 2, 13,15,15, 4, 11,15,15,12, 15, 3,15,15,
@@ -108,9 +109,9 @@ static const uint8_t acgt_nt256_nt16[] = {
     15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
     15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
     15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15
-};
+};*/
 
-static const uint8_t acgt_nt16_nt4[] = { 4, 0, 1, 4, 2, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4 };
+//static const uint8_t acgt_nt16_nt4[] = { 4, 0, 1, 4, 2, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4 };
 
 
 static const uint8_t binary_nt256_nt4[] = {
@@ -236,6 +237,7 @@ void load_sequences(const string &fasta_fn, T &names, T &seqs) {
     kseq_t *seq;
     int l;
     fp = gzopen(fasta_fn.c_str(), "r");
+    assert (fp != nullptr);
     seq = kseq_init(fp);
 
     int len=0; // length of sequences (for checking)
@@ -244,7 +246,7 @@ void load_sequences(const string &fasta_fn, T &names, T &seqs) {
         names.push_back(seq->name.s);
         string s(seq->seq.s);
         for (auto & c: s) {
-            c = toupper(c);
+            c = toupper(c); 
         }
         if(len!=0){
             assert(len==s.size());
@@ -480,7 +482,7 @@ int distance_norm(const pair_char_t &pair_char) {
 template <typename T>
 void print_distance_matrix(const T &distance_matrix){
     assert(distance_matrix.size() == distance_matrix[0].size());
-    int count=distance_matrix.size();
+    int count=static_cast<int>(distance_matrix.size());
 
     /*cout << "#taxid";
     for (const string& name : names){
@@ -536,7 +538,7 @@ int main (int argc, const char **argv) {
     vector<vector<int>> distance_matrix(count, vector<int>(count, 0));
     pair_char_t pair_char;
     for(int i=0;i<count;i++){
-        for(int j=0;j<=count;i++){
+        for(int j=0;j<=i;j++){
             compute_pair_matrix(seqs[i], seqs[j], mask, pair_matrix);
             if (params.input==input_t::ACGT){
                 pair_matrix_char_acgt(pair_matrix, pair_char);
