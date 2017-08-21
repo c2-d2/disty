@@ -17,6 +17,16 @@ cd disty && make
 ./disty tests/test2.fa
 ```
 
+Output:
+```
+	seq1	seq2	seq3
+seq1	0	3	1
+seq2	3	0	1
+seq3	1	1	0
+
+```
+
+
 **Installation:** ``make install``
 
 
