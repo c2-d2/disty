@@ -60,9 +60,10 @@ enum class n_strategy_t {
 
 string USAGE=
 "\n"
-"Program: distmat - compute distance matrix from a FASTA alignment file\n"
+"Program: Disty McMatrixface - compute distance matrix from a core genome alignment file\n"
+"Contact: Karel Brinda <kbrinda@hsph.harvard.edu>"
 "\n"
-"Usage:   distmat <inp.aln>\n"
+"Usage:   disty <inp_aln.fa>\n"
 "\n"
 "Options:\n"
 "  -n  FLOAT  skip columns having frequency of N > FLOAT [1.00]\n"

@@ -10,12 +10,12 @@ hfiles    = $(wildcard src/*.h)
 
 .PHONY: all clean install
 
-all: distmat
+all: disty
 
-install: distmat
-	install distmat $(BINDIR)/distmat
+install: disty
+	install disty $(BINDIR)/disty
 
-distmat: $(ofiles)
+disty: $(ofiles)
 	$(CXX) $(CXXFLAGS) $(DFLAGS) $(ofiles) -o $@ -L. $(LIBS)
 
 src/%.cpp.o: src/%.cpp $(hfiles)
@@ -23,5 +23,5 @@ src/%.cpp.o: src/%.cpp $(hfiles)
 
 clean:
 	rm -f src/*.o
-	rm -f distmat
+	rm -f disty
 

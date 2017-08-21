@@ -4,7 +4,7 @@ SHELL=/usr/bin/env bash -euc -o pipefail
 
 .SECONDARY:
 
-DM=../distmat
+DM=../disty
 SEQ=$(wildcard *.fa)
 
 all:

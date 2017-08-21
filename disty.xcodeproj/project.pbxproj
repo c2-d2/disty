@@ -27,7 +27,7 @@
 /* Begin PBXFileReference section */
 		FC6DB7371F16D6EB00DCFDD5 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = src/main.cpp; sourceTree = SOURCE_ROOT; };
 		FC6DB7391F16D71100DCFDD5 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = SOURCE_ROOT; };
-		FCE6C6381F0FD04B00EE50DE /* distmat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = distmat; sourceTree = BUILT_PRODUCTS_DIR; };
+		FCE6C6381F0FD04B00EE50DE /* disty */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = disty; sourceTree = BUILT_PRODUCTS_DIR; };
 		FCE6C6431F0FD8AC00EE50DE /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -46,7 +46,7 @@
 		FCE6C62F1F0FD04B00EE50DE = {
 			isa = PBXGroup;
 			children = (
-				FCE6C63A1F0FD04B00EE50DE /* distmat */,
+				FCE6C63A1F0FD04B00EE50DE /* disty */,
 				FCE6C6391F0FD04B00EE50DE /* Products */,
 				FCE6C6421F0FD8AC00EE50DE /* Frameworks */,
 			);
@@ -55,18 +55,18 @@
 		FCE6C6391F0FD04B00EE50DE /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				FCE6C6381F0FD04B00EE50DE /* distmat */,
+				FCE6C6381F0FD04B00EE50DE /* disty */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		FCE6C63A1F0FD04B00EE50DE /* distmat */ = {
+		FCE6C63A1F0FD04B00EE50DE /* disty */ = {
 			isa = PBXGroup;
 			children = (
 				FC6DB7391F16D71100DCFDD5 /* Makefile */,
 				FC6DB7371F16D6EB00DCFDD5 /* main.cpp */,
 			);
-			path = distmat;
+			path = disty;
 			sourceTree = "<group>";
 		};
 		FCE6C6421F0FD8AC00EE50DE /* Frameworks */ = {
@@ -80,9 +80,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		FCE6C6371F0FD04B00EE50DE /* distmat */ = {
+		FCE6C6371F0FD04B00EE50DE /* disty */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FCE6C63F1F0FD04B00EE50DE /* Build configuration list for PBXNativeTarget "distmat" */;
+			buildConfigurationList = FCE6C63F1F0FD04B00EE50DE /* Build configuration list for PBXNativeTarget "disty" */;
 			buildPhases = (
 				FCE6C6341F0FD04B00EE50DE /* Sources */,
 				FCE6C6351F0FD04B00EE50DE /* Frameworks */,
@@ -92,9 +92,9 @@
 			);
 			dependencies = (
 			);
-			name = distmat;
-			productName = distmat;
-			productReference = FCE6C6381F0FD04B00EE50DE /* distmat */;
+			name = disty;
+			productName = disty;
+			productReference = FCE6C6381F0FD04B00EE50DE /* disty */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -112,7 +112,7 @@
 					};
 				};
 			};
-			buildConfigurationList = FCE6C6331F0FD04B00EE50DE /* Build configuration list for PBXProject "distmat" */;
+			buildConfigurationList = FCE6C6331F0FD04B00EE50DE /* Build configuration list for PBXProject "disty" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -124,7 +124,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				FCE6C6371F0FD04B00EE50DE /* distmat */,
+				FCE6C6371F0FD04B00EE50DE /* disty */,
 			);
 		};
 /* End PBXProject section */
@@ -248,7 +248,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		FCE6C6331F0FD04B00EE50DE /* Build configuration list for PBXProject "distmat" */ = {
+		FCE6C6331F0FD04B00EE50DE /* Build configuration list for PBXProject "disty" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FCE6C63D1F0FD04B00EE50DE /* Debug */,
@@ -257,7 +257,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FCE6C63F1F0FD04B00EE50DE /* Build configuration list for PBXNativeTarget "distmat" */ = {
+		FCE6C63F1F0FD04B00EE50DE /* Build configuration list for PBXNativeTarget "disty" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FCE6C6401F0FD04B00EE50DE /* Debug */,
