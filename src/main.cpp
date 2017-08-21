@@ -25,6 +25,9 @@
  */
 
 
+#ifndef DISTY_VERSION
+#define DISTY_VERSION "0.1.0"
+#endif
 
 #include <climits>
 #include <cstdio>
@@ -60,10 +63,11 @@ enum class n_strategy_t {
 
 string USAGE=
 "\n"
-"Program: Disty McMatrixface - compute distance matrix from a core genome alignment file\n"
-"Contact: Karel Brinda <kbrinda@hsph.harvard.edu>"
+"Program: Disty McMatrixface - compute a distance matrix from a core genome alignment file\n"
+"Version: " DISTY_VERSION "\n"
+"Contact: Karel Brinda <kbrinda@hsph.harvard.edu>\n"
 "\n"
-"Usage:   disty <inp_aln.fa>\n"
+"Usage:   disty <alignment.fa>\n"
 "\n"
 "Options:\n"
 "  -n  FLOAT  skip columns having frequency of N > FLOAT [1.00]\n"
@@ -76,7 +80,8 @@ string USAGE=
 "                 2: ignore globally\n"
 "                 3: replace by the major allele\n"
 "                 4: replace by the closest individual (not implemented yet)\n"
-"  -h         print help message and exit\n";
+"  -h         print help message and exit\n"
+"  -v         print version and exit\n";
 
 struct params_t {
     string fasta_fn;
@@ -167,10 +172,14 @@ void parse_arguments(int argc, const char **argv, params_t &params) {
     }
 
     int c;
-    while ((c = getopt(argc, (char *const *)argv, "hi:s:n:")) >= 0) {
+    while ((c = getopt(argc, (char *const *)argv, "hvi:s:n:")) >= 0) {
         switch (c) {
             case 'h': {
                 cout << USAGE << endl;
+                exit(0);
+            }
+            case 'v': {
+                cout << DISTY_VERSION << endl;
                 exit(0);
             }
             case 'i': {
