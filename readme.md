@@ -75,4 +75,4 @@ Options:
 
 ## Author
 
-[Karel Brinda](http://brinda.cz) <kbrinda@hsph.harvard.edu>
+[Karel Brinda](http://brinda.cz) &lt;kbrinda@hsph.harvard.edu&gt;
