@@ -26,8 +26,30 @@ seq3	1	1	0
 
 ```
 
+## Installation
 
-**Installation:** ``make install``
+**Using Bioconda:**
+
+```bash
+conda config --add channels defaults
+conda config --add channels conda-forge
+conda config --add channels bioconda
+
+conda install disty
+```
+
+**Using brew:**
+
+```bash
+brew install tseemann/bioinformatics-linux/disty
+```
+
+**From Github:**
+
+```bash
+git clone https://github.com/c2-d2/disty
+cd disty && make && make install
+```
 
 
 ## Command line parameters
@@ -53,5 +75,4 @@ Options:
 
 ## Author
 
-[Karel Brinda](http://brinda.cz) (kbrinda@hsph.harvard.edu)
-
+[Karel Brinda](http://brinda.cz) <kbrinda@hsph.harvard.edu>
